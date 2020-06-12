@@ -1,0 +1,131 @@
+.Wrap,body,html{
+    width:100%;
+    height: 100%;
+
+}
+*{
+    padding:0;
+    margin:0;
+}
+.wrap{
+    position: relative;
+}
+.calipersWrap{
+    position: absolute;
+    left: 0;
+    top:0;
+    z-index: 0;
+    width:100%;
+    height: 100%;
+}
+.calipers{
+    background:#ccc;
+   
+}
+.editorWrap{
+    width:1000px;
+    height: 500px;
+    margin:20px  auto 0 auto;
+}
+.cavasWrap{
+  position: absolute;
+    z-index: 1;
+}
+.cavas{
+    position: absolute;
+}
+.componentsWrap{
+    width:1000px;
+    height: auto;
+    position: absolute;
+    z-index: 2;
+}
+.componentsWrap .item{
+    width:150px;
+    height: 150px;
+    background:yellow;
+    position: absolute;
+    left: 0;
+    top:0;
+}
+
+.resizeWrap >span{
+    position: absolute;
+
+}
+.resizeWrap >span.l{
+    width:3px;
+    background:red;
+    top:0;
+    left:0;
+    z-index: 9;
+    cursor:w-resize;
+}
+.resizeWrap >span.r{
+    width:3px;
+    background:red;
+    top:0;
+    right:0;
+    z-index: 9;
+    cursor:w-resize;
+}
+.resizeWrap >span.t{
+    height:3px;
+    background:red;
+    top:0;
+    right:0;
+    z-index: 9;
+    cursor:s-resize;
+ }
+ .resizeWrap >span.b{
+    height:3px;
+    background:red;
+    bottom:0;
+    right:0;
+    z-index: 9;
+    cursor:s-resize;
+ }
+ .resizeWrap >span.lt,.resizeWrap >span.lb,.resizeWrap >span.rt,.resizeWrap >span.rb{
+     width:10px;
+     height: 10px;
+     position: absolute;
+     border:1px solid red;
+     z-index: 10;
+ }
+ .resizeWrap >span.lt{
+     top:-5px;
+     left:-5px;
+     cursor:se-resize;
+ }
+ .resizeWrap >span.lb{
+     bottom:-5px;
+     left:-5px;
+     cursor:ne-resize;
+ }
+ .resizeWrap >span.rt{
+     top:-5px;
+     right:-5px;
+     cursor:ne-resize;
+ }
+ .resizeWrap >span.rb{
+     bottom:-5px;
+     right:-5px;
+     cursor:se-resize;
+ }
+ .tipsWrap{
+     position: absolute;
+     bottom:-55px;
+     right:-115px;
+     background:rgba(0, 0,0, 0.5);
+     width:100px;
+     
+     border-radius: 5px;
+     color:#fff;
+ }
+ .tipsWrap > p{
+     height: 25px;
+     line-height: 25px;
+     padding-left: 10px;
+     box-sizing: border-box;
+     font-size: 12px;
+ }

@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+      .Wrap,body,html{
+          width:100%;
+          height: 100%;
+
+      }
+      *{
+          padding:0;
+          margin:0;
+      }
+      .wrap{
+          position: relative;
+      }
+      .calipersWrap{
+          position: absolute;
+          left: 0;
+          top:0;
+          z-index: 0;
+          width:100%;
+          height: 100%;
+      }
+      .calipers{
+          background:#ccc;
+         
+      }
+      .editorWrap{
+          width:1000px;
+          height: 500px;
+          margin:20px  auto 0 auto;
+      }
+      .cavasWrap{
+        position: absolute;
+          z-index: 1;
+      }
+      .cavas{
+          position: absolute;
+      }
+      .componentsWrap{
+          width:1000px;
+          height: auto;
+          position: absolute;
+          z-index: 2;
+      }
+      .componentsWrap .item{
+          width:150px;
+          height: 150px;
+          background:yellow;
+          position: absolute;
+          left: 0;
+          top:0;
+      }
+     
+      .resizeWrap >span{
+          position: absolute;
+
+      }
+      .resizeWrap >span.l{
+          width:3px;
+          background:red;
+          top:0;
+          left:0;
+          z-index: 9;
+          cursor:w-resize;
+      }
+      .resizeWrap >span.r{
+          width:3px;
+          background:red;
+          top:0;
+          right:0;
+          z-index: 9;
+          cursor:w-resize;
+      }
+      .resizeWrap >span.t{
+          height:3px;
+          background:red;
+          top:0;
+          right:0;
+          z-index: 9;
+          cursor:s-resize;
+       }
+       .resizeWrap >span.b{
+          height:3px;
+          background:red;
+          bottom:0;
+          right:0;
+          z-index: 9;
+          cursor:s-resize;
+       }
+       .resizeWrap >span.lt,.resizeWrap >span.lb,.resizeWrap >span.rt,.resizeWrap >span.rb{
+           width:10px;
+           height: 10px;
+           position: absolute;
+           border:1px solid red;
+           z-index: 10;
+       }
+       .resizeWrap >span.lt{
+           top:-5px;
+           left:-5px;
+           cursor:se-resize;
+       }
+       .resizeWrap >span.lb{
+           bottom:-5px;
+           left:-5px;
+           cursor:ne-resize;
+       }
+       .resizeWrap >span.rt{
+           top:-5px;
+           right:-5px;
+           cursor:ne-resize;
+       }
+       .resizeWrap >span.rb{
+           bottom:-5px;
+           right:-5px;
+           cursor:se-resize;
+       }
+       .tipsWrap{
+           position: absolute;
+           bottom:-55px;
+           right:-115px;
+           background:rgba(0, 0,0, 0.5);
+           width:100px;
+           
+           border-radius: 5px;
+           color:#fff;
+       }
+       .tipsWrap > p{
+           height: 25px;
+           line-height: 25px;
+           padding-left: 10px;
+           box-sizing: border-box;
+           font-size: 12px;
+       }
+    </style>
+</head>
+<body>
+     <div class="Wrap"  id="Wrap">
+         <div class="calipersWrap" >
+            <canvas id="calipers" class="calipers" width="2000px" height="2000px"></canvas>
+         </div>
+         <div class="editorWrap" id="editorWrap">
+            <div class="cavasWrap">
+                <canvas id="canvas" class="cavas" width="1000px" height="1000px"></canvas>
+                <div class="bgWrap"></div>
+             </div>
+             <div class="componentsWrap" id="componentsWrap">
+                 <div class="">
+                    <div class="item" data-id="1" z-index='1' style="z-index:1">
+                        <span>1111</span>
+                        <span>1111</span>
+                        <span>1111</span>
+                        <span>1111</span>
+                        <span>1111</span>
+                      
+                    </div>
+                    <div class="item" data-id="2" z-index='2'  style="top:200px;left:300px;z-index:2"></div>
+                    <div class="item" data-id="3" z-index='3'  style="top:100px;left:300px;z-index:3"></div>
+                    <div class="item" data-id="4" z-index='4'  style="top:230px;left:500px;z-index:4"></div>
+                    <div class="item" data-id="5" z-index='5'  style="top:277px;left:300px;z-index:5"></div>
+                    <div class="item" data-id="6" z-index='6'  style="top:150px;left:200px;z-index:6"></div>
+                    <div class="item" data-id="7" z-index='7'  style="top:600px;left:300px;z-index:7"></div>
+                 </div>
+                
+             </div>
+         </div>
+         
+     </div>
+     <script>
+
+        (function(){
+            var Utils = function(option){
+                this.option = option;
+                this.methods = {
+                    //通过行为找到对应的辅助线类型 left或者top
+                    behaviorTolineType:function(opts){
+                        switch(opts.behavior){
+                            case 'l':
+                                return ['left'];
+                            case 'r':
+                                return ['LAndW'];
+                            case 't':
+                                return ['top'];
+                            case 'b':
+                                return ['TAndH'];
+                            case 'lt':
+                                return ['left','top'];
+                            case 'lb':
+                                return ['left','TAndH'];  
+                            case 'rt':    
+                                return ['LAndW','top'];  
+                            case 'rb':    
+                                return ['LAndW','TAndH']; 
+                            default :
+                                return [];         
+                        }
+                    },
+                    objMerge:function(obj1,obj2){
+                        var obj = {
+                            width:obj1.width == obj2.width ? obj1.width:obj2.width,
+                            height:obj1.height == obj2.height ? obj1.width:obj2.height,
+                            top:obj1.top == obj2.top ? obj1.top:obj2.top,
+                            left:obj1.left == obj2.left ? obj1.left:obj2.left,
+                        }
+                        return obj;
+                    },
+                    /*
+                    *辅助线的坐标--组件的坐标
+                    */
+                    getCurobj:function(behaviorType,obj){
+                        var ctop = obj.componentEle.offsetTop;
+                        var cleft = obj.componentEle.offsetLeft;
+                        var speedY = 0,speedX= 0;
+                        var curobj = {};
+                        var left,top,width,height;
+                        if(behaviorType == 'top'){
+                            speedY = ctop - obj.top ;
+                            top = obj.top ;
+                            height = obj.cHeight + speedY;
+                            return {
+                                top:top,
+                                height:height,
+                            }
+                        }
+                        if(behaviorType == 'left'){
+                            speedX = cleft - obj.left;
+                            left = obj.left;
+                            width = obj.cWidth + speedX ;
+                            return {
+                                left: left,
+                                width:width,
+                            }
+                        }
+                        if(behaviorType == 'LAndW'){ //这种情况是吸附right
+                            speedX = obj.LAndW -  obj.cWidth - cleft  ;
+                            width = obj.cWidth + speedX ;
+                            return {
+                                width:width,
+                            }
+                        }
+                        if(behaviorType == 'TAndH'){ //这种情况是吸附bottom
+                            speedY = obj.TAndH -  obj.cHeight - ctop  ;
+                            height = obj.cHeight + speedY;
+                            return {
+                                height:height,
+                            }
+                        }
+                        return {};
+                    },
+                    behaviorTypeToline:function(typeArr,array){
+                        //返回实际的left 以及top 和width/height
+                       var curObj = {};
+                       var array = array || [];
+                       var typeArr  = typeArr || [];
+                       if(!typeArr.length){ //如果没有拖拽行为 这种情况可以是在拖拽整个组件而不是resize
+                           return;
+                       }
+                       for(var i=0;i<array.length;i++){
+                           var curobj = {
+                                left: array[i].componentEle.offsetleft,
+                                top: array[i].componentEle.offsetTop,
+                                width:array[i].cWidth,
+                                height:array[i].cHeight,
+                            }
+                            for(var j=0;j<typeArr.length;j++){
+                                if(array[i][typeArr[j]]){
+                                   curObj = Object.assign({},curObj,this.getCurobj(typeArr[j],array[i]));
+                               }
+                           }
+                          
+                       }
+                     
+                       return curObj
+                    },
+                    getTypeTocurLAndW:function(obj){
+                        var ctop = obj.componentEle.offsetTop;
+                        var cleft = obj.componentEle.offsetLeft;
+                        var nobj = {};
+                        if(obj.LAndW){ //
+                           nobj.left = obj.LAndW - obj.cWidth;
+                        }
+                        if(obj.LAndW){ //
+                            nobj.top = obj.TAndH - obj.cHeight;
+                        }
+                        return Object.assign({},obj,nobj);
+                    },
+                    //通过每条线的最小值进行吸附 todo
+                    minNumBehaviorToline:function(lineArray){
+                        var nArrAy = [];
+                        var curobj = {};
+                        var lineArray = lineArray || [];
+                        var leftArr = [];
+                        var topArr = [];
+                        var minTop = 0;
+                        var minleft = 0;
+                        if(!lineArray.length){ return null}
+                        
+                        curobj = {
+                          top:lineArray[0].componentEle.offsetTop,
+                          left:lineArray[0].componentEle.offsetLeft,
+                        }
+                       for(var i=0;i<lineArray.length;i++){
+                           var zcObj = this.getTypeTocurLAndW(lineArray[i]);
+                           zcObj.left && leftArr.push(zcObj.left);
+                           zcObj.top && topArr.push(zcObj.top);
+                       }
+                       var minleft =  Math.max.apply(Math, leftArr);
+                       var minTop =  Math.max.apply(Math, topArr);
+                       return Object.assign(curobj,{
+                           left:minleft,
+                           top:minTop
+                       });
+                    }
+
+                }
+            }
+            /*
+             * 获取吸附的目标组件数据
+             * 参数当前的组件数据
+            */
+            Utils.prototype.getAdsorbentArr = function(curObj){
+                var array = new Array();
+                var speed = this.option.adsorptionNum;
+                var componentData = this.option.componentData;
+                var curTAndH = curObj.top+ curObj.height;
+                var curLAndW = curObj.left + curObj.width;
+                 /**
+                 * 1.left 值相近
+                 * 2.top值相近
+                 * 3.top+component.height
+                 * 4.left+component.width;
+                 */
+                for(var i=0;i<componentData.length;i++){
+                    if(componentData[i].id != curObj.id){
+                        var width = componentData[i].componentEle.offsetWidth;
+                        var height= componentData[i].componentEle.offsetHeight;
+                        var top = componentData[i].componentEle.offsetTop;
+                        var left = componentData[i].componentEle.offsetLeft;
+                        var TAndH = top + height;
+                        var LAndW = left + width;
+                        if(Math.abs(left-curObj.left) <= speed){
+                           var obj = {
+                               type:'Y',
+                               left:left,
+                               cWidth:curObj.width,
+                               cHeight:curObj.height,
+                               componentEle:curObj.componentEle
+                           }
+                           array.push(obj);
+                        } 
+                        if(Math.abs(top-curObj.top) <= speed){
+                            var obj = {
+                               type:'X',
+                               top:top,
+                               cWidth:curObj.width,
+                               cHeight:curObj.height,
+                               componentEle:curObj.componentEle
+                           }
+                           array.push(obj);
+                        }
+                        if(Math.abs(LAndW-curLAndW) <= speed){
+                            var obj = {
+                               type:'Y',
+                               LAndW:LAndW,
+                               cWidth:curObj.width,
+                               cHeight:curObj.height,
+                               componentEle:curObj.componentEle
+                           }
+                           array.push(obj);
+                        }
+                        if(Math.abs(TAndH-curTAndH) <= speed){
+                            var obj = {
+                               type:'X',
+                               TAndH:TAndH,
+                               cWidth:curObj.width,
+                               cHeight:curObj.height,
+                               componentEle:curObj.componentEle
+                           }
+                           array.push(obj);
+                        }
+                    }
+                }
+                //console.log('getAdsorbentArr',array);
+                return array;
+               // console.log(curObj);
+            };
+            Utils.prototype.lineAdsorbent = function(opts){
+                 var behavior = opts.behavior || behavior;//行为
+                 var lineArray = opts.lineArray;
+                 var methods = this.methods;
+                 if(!behavior){ //无行为 //这种情况一般出现在drag中
+                    var curobj = methods.minNumBehaviorToline(lineArray);
+                    (curobj !=null)  && (opts.callback(curobj));
+                 }else{
+                    var behaviorTolineType = methods.behaviorTolineType(opts);
+                    //通过行为类型获取到实际的位置
+                    var curobj =  methods.behaviorTypeToline(behaviorTolineType,lineArray);
+                    opts.callback(curobj);
+                 }
+                
+                 //console.log(behaviorTolineType);
+                 
+            };
+           //获取最大的z-index
+            Utils.prototype.getMaxZindex = function(arr){
+                var maxZindex = 0;
+                var inxArr = [];
+                for(var i=0;i<arr.length;i++){
+                    var zIndx = arr[i].componentEle.getAttribute('z-index');
+                    inxArr.push(zIndx);
+                };
+                maxZindex = Math.max.apply(Math, inxArr)
+                return maxZindex;
+            };
+            //setZindex
+            Utils.prototype.setZindex = function(componentEle,index){
+                componentEle.setAttribute('z-index',index);
+                componentEle.style.zIndex = index; 
+            };    
+            //坐标框
+            var Tips = function(){
+                var _this = this;
+                this.methods = {
+                    insetHtml:function(option){
+                        var node = document.createElement('div');
+                        node.classList.add('tipsWrap');
+                        var str = '<p class="X">X:'+option.left+'像素</p>'+
+                                  '<p class="Y">Y:'+option.top+'像素</p>'+
+                                  '<p class="width">宽:'+option.width+' 像素</p>'+
+                                  '<p class="height">高:'+option.height+' 像素</p>';
+                        node.innerHTML = str;  
+                        var $TipsWrap = option.componentEle.querySelector('.tipsWrap');        
+                        if($TipsWrap) {
+                             _this.upDate(option);
+                            $TipsWrap.style.display = 'block';
+                        }else{
+                            option.componentEle.append(node); 
+                        } 
+                    }
+                }
+                 
+            };
+            Tips.prototype.show = function(opts){
+                var methods = this.methods;
+                methods.insetHtml(opts);
+            };
+            Tips.prototype.upDate = function(opts){
+                var $TipsWrap = opts.componentEle.querySelector('.tipsWrap');
+                var $x =  $TipsWrap.querySelector('.X');
+                var $y =  $TipsWrap.querySelector('.Y');
+                var $width =  $TipsWrap.querySelector('.width');
+                var $height=  $TipsWrap.querySelector('.height');
+                $x.innerHTML = 'X:'+opts.left +'像素';
+                $y.innerHTML = 'Y:'+opts.top +'像素'
+                $width.innerHTML = '宽:'+opts.width +'像素';
+                $height.innerHTML = '高:'+opts.height +'像素';
+            };
+            Tips.prototype.hide = function(opts){
+              var $TipsWrap = opts.componentEle.querySelector('.tipsWrap');
+              $TipsWrap.style.display = 'none';
+            }
+            var cavasFn = function(option){
+                this.option = option;
+                this.ctx = this.option.cavasEl.getContext("2d");
+                this.ctx.clearRect(0,0,option.cavasWidth,option.cavasHeigth);  
+                this.methods = {
+                    moveLine:function(opts){
+                        opts.ctx.beginPath();
+                        opts.ctx.moveTo(opts.beginX,opts.beginY);
+                        opts.ctx.lineWidth = opts.lineWidth ||0.5;
+                        opts.ctx.strokeStyle = opts.linecolor;
+                        opts.ctx.lineTo(opts.endX, opts.cedY);
+                        opts.ctx.stroke();
+                        opts.ctx.closePath();
+                    }
+                }
+                this.init();
+                
+            };
+            //横线
+            cavasFn.prototype.across = function(){
+                var opts = this.option;
+                var ctx = this.ctx;
+                var methods =  this.methods;
+                var h = opts.cavasHeigth;
+                var hLength = h/opts.spacing;
+                for(var i=0;i<h;i+= opts.spacing){
+                    var obj = {
+                        ctx:ctx,
+                        beginX:0,
+                        beginY:i,
+                        endX:opts.cavasWidth,
+                        cedY:i,
+                        linecolor:opts.linecolor
+                    };
+                    (i%100 == 0) && (obj.lineWidth = 1);
+                    methods.moveLine(obj);
+                }
+            };
+            //竖线
+            cavasFn.prototype.vertical  = function(){
+                var opts = this.option;
+                var ctx = this.ctx;
+                var methods =  this.methods;
+                var w = opts.cavasWidth;
+                for(var i=0;i<w;i+= opts.spacing){
+                    var obj = {
+                        ctx:ctx,
+                        beginX:i,
+                        beginY:0,
+                        endX: i,
+                        cedY:opts.cavasHeigth,
+                        linecolor:opts.linecolor
+                    };
+                    ;
+                    (i%100 == 0) && (obj.lineWidth = 1);
+                    methods.moveLine(obj);
+                }
+            };
+            cavasFn.prototype.init = function(){
+                var opts = this.option;
+                var ctx = this.ctx;
+                var methods =  this.methods;
+                var h = opts.cavasHeigth;
+                var w = opts.cavasWidth;
+                this.across();
+                this.vertical();
+                ctx.save();
+                /* methods.moveLine({
+                    ctx:ctx,
+                    beginX:10,
+                    beginY:0,
+                    endX:10,
+                    cedY:500,
+                    linecolor:red
+                });
+ */
+            }
+            //辅助线
+            var Guide = function(option){
+                var _this = this;
+                this.option = option;
+                this.ctx = this.option.calipers.cavasEl.getContext("2d");
+                this.editorWrapL =_this.option.editorWrap.offsetLeft; 
+                this.editorWrapT =_this.option.editorWrap.offsetTop; 
+                //console.log(this.option.calipers.cavasEl.width,_this.option.calipers.cavasEl.height);
+                this.state = {
+                    cavasH:_this.option.calipers.cavasEl.height,
+                    cavasW:_this.option.calipers.cavasEl.width,
+                    lineArrary:[]
+                }
+                this.methods = {
+                    moveLine:function(opts){
+                        opts.ctx.beginPath();
+                        opts.ctx.moveTo(opts.beginX || 0,opts.beginY || 0);
+                        opts.ctx.lineWidth = opts.lineWidth || 1,
+                        opts.ctx.strokeStyle = opts.linecolor || "red",
+                        opts.ctx.lineTo(opts.endX || 0, opts.cedY || 0);
+                        opts.ctx.stroke();
+                        opts.ctx.closePath();
+                    },
+                    clearLineY(opts){
+                        _this.ctx.clearRect((opts.left-1), 0, 2, _this.state.cavasH);
+                    },
+                    clearLineX(opts){
+                        _this.ctx.clearRect(0, (opts.top-1),  _this.state.cavasW,2);
+                    }
+                }
+            }
+            Guide.prototype.playGuidX = function(option){
+                var methods = this.methods;
+                var opts = option;
+                methods.moveLine({
+                    ctx :this.ctx,
+                    beginX:0,
+                    beginY:option.top,
+                    cedY:option.top,
+                    endX:this.state.cavasW
+                }); 
+            }
+            Guide.prototype.playGuidY = function(option){
+                var methods = this.methods;
+                var opts = option;
+                methods.moveLine({
+                    ctx :this.ctx,
+                    beginX:option.left,
+                    beginY:0,
+                    cedY:this.state.cavasH,
+                    endX:option.left
+                }); 
+            }
+            Guide.prototype.playGuid = function(option){
+                var methods = this.methods;
+                var opts = option;
+                this.state.lineArrary.push(opts);
+                if(opts.type == 'X'){
+                    this.playGuidX(opts);
+                }else{
+                    this.playGuidY(opts);
+                }
+            }
+            Guide.prototype.playGuids = function(array){
+               this.clearGuid();
+               for(var i=0;i<array.length;i++){
+                   this.playGuid({
+                       type:array[i].type,
+                       left:((array[i].left || array[i].LAndW) + this.editorWrapL) || '',
+                       top:(array[i].top || array[i].TAndH ) + this.editorWrapT,
+                   })
+               }
+            }
+            Guide.prototype.clearGuid = function(option){
+                 var lineArray = this.state.lineArrary;
+                 var methods = this.methods;
+                 for(var i=0;i<lineArray.length;i++){
+                      methods['clearLine'+lineArray[i].type](lineArray[i])
+                 }
+                 this.state.lineArrary = [];
+            }
+            //卡尺
+            var Calipers = function(){
+
+            }
+            //用于获取组件的一些参数 并且以及更新组件参数
+            var getCommpontesData = function(option){
+                   this.opts = option;
+                   console.log(this.init());
+                   return this.init();
+            };
+            getCommpontesData.prototype.getData = function(){
+                var _this = this;
+                var componentsWrap  = this.opts.componentsWrap;
+                var components = componentsWrap.querySelectorAll(this.opts.eventItem);
+                var componentArray = [];
+                for(var i=0;i<components.length;i++){
+                    var obj = {
+                        id: components[i].getAttribute('data-id'),
+                        componentEle:components[i],
+                        zIndex:components[i].getAttribute('z-index') || 1,
+                        offsetTop: components[i].offsetTop,
+                        offsetLeft : components[i].offsetLeft,
+                        wrapT:_this.opts.cavasEl.offsetTop,
+                        wrapL : _this.opts.cavasEl.offsetLeft,
+                        wrapW : _this.opts.cavasWidth,
+                        wrapH : _this.opts.cavasHeigth,
+                        width :components[i].offsetWidth,
+                        height :  components[i].offsetHeight, 
+                    }
+                    componentArray.push(obj);
+                }
+                
+                return componentArray;
+            };
+            getCommpontesData.prototype.init = function(){
+                 return this.getData();;
+            };
+            
+            getCommpontesData.upDate = function(){
+                return this.getData();
+            }
+
+
+            //组件拖拽
+            var DragComponent = function(option){
+                this.option = option;
+                this.guide = new Guide(option);
+                this.utils = new Utils(option);
+                this.tips = new Tips();
+                this.init();
+                this.state = {};
+            };
+            //吸附辅助线
+            DragComponent.prototype.isAdsorbent = function(itemObj,adsorbentCallback,noadsorbentCallback){
+                var $wrap = this.option.target;
+                var speed = 20;
+                var $eventItem = $wrap.querySelectorAll(this.option.eventItem);
+                var componentsData = this.option.componentData;
+                var array = [];
+                for(var i=0;i<$eventItem.length;i++){
+                    var id = $eventItem[i].getAttribute('data-id');
+                    if(id == itemObj.id){
+                        continue
+                    }else{
+                        var offsetLeft = $eventItem[i].offsetLeft;
+                        var offsetTop = $eventItem[i].offsetTop;
+                        var type = (Math.abs(itemObj.moveLeft - offsetLeft) <= speed) ? 'Y':(Math.abs(itemObj.moveTop - offsetTop) <= speed)?'X':'';
+                        var obj = {
+                            itemLeft:offsetLeft,
+                            itemTop:offsetTop,
+                            type:type
+                        };
+
+                        if(Math.abs(itemObj.moveLeft - offsetLeft) <= speed || Math.abs(itemObj.moveTop - offsetTop) <= speed){
+                            array.push(obj);
+                            adsorbentCallback(obj);
+                            console.log(array);
+                            break;
+                        }else{
+                            noadsorbentCallback(obj);
+                            array = [];
+                            //break;
+                        }
+                        
+                    }
+                    
+                }
+            };
+            DragComponent.prototype.eventFn = function(){
+               var _this = this;
+               var componentsData = this.option.componentData;
+               var $wrap = this.option.target;
+               var ads = {
+                   isads:true
+               }; //是否吸附
+               var $eventItem = $wrap.querySelectorAll(this.option.eventItem);
+               var editorWrapL =_this.option.editorWrap.offsetLeft; 
+               var editorWrapT =_this.option.editorWrap.offsetTop; 
+               var evtFn = function(cObj){
+                    var itemObj = {
+                        wrapT:'', //包裹元素盒子的t
+                        wrapL:'',//包裹元素盒子的L
+                        wrapW:'',
+                        wrapH:'',
+                        width:'',
+                        height:'',
+                        downTop:'',
+                        downLeft:'',
+                        downevtT:'',
+                        downevtL:'',
+                        moveTop:'',
+                        moveLeft:'',
+                        moveevtT:'',
+                        moveevtL:'',
+                        moveingT:'',//移动中的距离  
+                        moveingL:'',
+                        isads:false,
+                    }
+                    var mousedownFn = function(e){
+                        itemObj = {isads:false,adsL:"",adsT:""};
+                        var getMaxZindex = _this.utils.getMaxZindex(componentsData);
+                        _this.utils.setZindex(cObj.componentEle,getMaxZindex+1);
+                        var index = getMaxZindex+1;
+                        itemObj = Object.assign({isads:false,adsL:"",adsT:""},itemObj,cObj,{
+                            id:this.getAttribute('data-id'),
+                            zIndex:index,
+                            downTop:this.offsetTop,
+                            downLeft:this.offsetLeft,
+                            downevtL:e.pageX,
+                            downevtT:e.pageY,
+                            width:this.offsetWidth,
+                            height:this.offsetHeight,
+                        });
+                        //位置框
+                        _this.tips.show({
+                           left:itemObj.downLeft,
+                           top:itemObj.downTop,
+                           width:itemObj.width,
+                           height:itemObj.height,
+                           componentEle:cObj.componentEle
+                        });
+                        this.removeEventListener("mousemove",mousemoveFn);
+                        this.addEventListener("mousemove",mousemoveFn);
+                    };
+                    var mousemoveFn = function(e){
+                        itemObj.moveTop = this.offsetTop;
+                        itemObj.moveLeft = this.offsetLeft;
+                        itemObj.moveevtL = e.pageX;
+                        itemObj.moveevtT = e.pageY;
+                        var t = itemObj.moveevtT - itemObj.downevtT + itemObj.downTop;
+                        var l = itemObj.moveevtL - itemObj.downevtL + itemObj.downLeft;
+                        if(t <  itemObj.wrapT || l <  itemObj.wrapL|| t > (itemObj.wrapT+ itemObj.wrapH-itemObj.height) || l > (itemObj.wrapL+ itemObj.wrapW-itemObj.width)){
+                            return;
+                        }
+                        itemObj.moveingL = itemObj.left =  l;
+                        itemObj.moveingT = itemObj.top = t;
+                        itemObj.lineArr = _this.utils.getAdsorbentArr({
+                            id:cObj.id,
+                            left:itemObj.moveingL,
+                            top: itemObj.moveingT,
+                            width:itemObj.width,
+                            height:itemObj.height,
+                            componentEle:cObj.componentEle
+                        });
+                        _this.guide.playGuids( itemObj.lineArr);
+                        _this.tips.upDate({
+                           left:itemObj.moveingL,
+                           top:itemObj.moveingT,
+                           width:itemObj.width,
+                           height:itemObj.height,
+                           componentEle:cObj.componentEle
+                        });
+                        this.style.top = itemObj.moveingT+"px";
+                        this.style.left = itemObj.moveingL+"px";
+                    };
+            
+                    var mouseupFn = function(e){
+                        this.removeEventListener("mousemove",mousemoveFn);
+
+                        var _t = this;
+                        //清除辅助线
+                        _this.utils.lineAdsorbent({
+                            lineArray: itemObj.lineArr,
+                            callback:function(curObj){
+                               /*  sizeObj = Object.assign(sizeObj,curObj)
+                                setWh(sizeObj,cObj); */
+                                _t.style.left = curObj.left+"px";
+                                _t.style.top = curObj.top+"px";
+
+                                _this.guide.clearGuid();
+                            }
+                        })
+                        _this.tips.hide({
+                            componentEle:cObj.componentEle
+                        });
+                        _this.option.drag &&  _this.option.drag(itemObj);
+                        //_this.guide.clearGuid();
+                        itemObj = {};
+                    }; 
+                    cObj.componentEle.removeEventListener("mousedown",mousedownFn);
+                    cObj.componentEle.addEventListener("mousedown",mousedownFn);
+                    cObj.componentEle.removeEventListener("mouseup",mouseupFn);
+                    cObj.componentEle.addEventListener("mouseup",mouseupFn);
+                }
+                for(var i=0;i<componentsData.length;i++){
+                   (function(Obj){
+                       evtFn(Obj);
+                   })(componentsData[i]);
+                }
+            };
+            DragComponent.prototype.init = function(){
+               this.eventFn();
+            }
+
+            var ResizeComponent = function(option){
+                this.opts = option;
+                this.utils = new Utils(option);
+                this.guide = new Guide(option);
+                this.tips = new Tips();
+                this.init();
+            };
+            ResizeComponent.prototype.init = function(){
+                // 
+                this.selectedEvt();
+
+            };
+            ResizeComponent.prototype.selectedEvt = function(){
+                var _this = this;
+                var componentData = this.opts.componentData;
+                var componentsWrap = this.opts.componentsWrap;
+                var getClass = function(node){
+                     return node.getAttribute('class');
+                };
+                var setBorderWh = function(parent,obj){
+                    parent.querySelector('.l').style.height = obj.height+"px";
+                    parent.querySelector('.r').style.height = obj.height+"px";
+                    parent.querySelector('.t').style.width = obj.width+"px";
+                    parent.querySelector('.b').style.width = obj.width+"px";
+                };
+                var setWh = function(object,cObj){
+                    cObj.componentEle.style.width = object.width+'px';
+                    cObj.componentEle.style.height = object.height+'px';
+                    cObj.componentEle.style.left = object.left+'px';
+                    cObj.componentEle.style.top = object.top+'px';
+                    setBorderWh(cObj.componentEle,object);
+                }
+                var sizeObj = {
+                    type:''
+                }
+                var sizeMouseMove = function(e,cObj){
+                    e.stopPropagation();
+                    var width = sizeObj.downW ;
+                    var height = sizeObj.downH ;
+                    var left = sizeObj.downLeft;
+                    var top = sizeObj.downTop;
+                    sizeObj = Object.assign({},sizeObj,{
+                        moveX:e.pageX,
+                        moveY:e.pageY,
+                        moveLeft:cObj.componentEle.offsetLeft
+                    });
+                    if(sizeObj.type == 'l') {
+                        var speedX = sizeObj.moveX - sizeObj.downX;
+                        width = sizeObj.downW - speedX;
+                        height = sizeObj.downH;
+                        left = sizeObj.downLeft + speedX;
+                        top = sizeObj.downTop;
+                        // 控制 left 最小边距
+                        (left<= cObj.wrapL) &&  (left = cObj.wrapL);
+                        (left<= cObj.wrapL) &&  (width = cObj.componentEle.offsetWidth);
+
+                        
+                        //设置卡尺 待todo..
+                        
+                    }
+                    if(sizeObj.type == 'r') {
+                        var speedX = sizeObj.moveX - sizeObj.downX;
+                        width = sizeObj.downW + speedX;
+                        height = sizeObj.downH;
+                        left = sizeObj.downLeft ;
+                        top = sizeObj.downTop;
+                        var leftAndW = width +  left;
+                        // 控制 left 最小边距
+                        (leftAndW >= cObj.wrapW) && (width = (cObj.wrapW-left));
+                        //设置卡尺 待todo..
+                       
+                    }
+                   
+                    if(sizeObj.type == 'b') {
+                        var speedY = sizeObj.moveY - sizeObj.downY;
+                        width = sizeObj.downW;
+                        height = sizeObj.downH + speedY;
+                        left = sizeObj.downLeft ;
+                        top = sizeObj.downTop;
+                        topAndH = height +  top;
+                        // 控制 left 最小边距
+                        (topAndH >= cObj.wrapH) && (height = (cObj.wrapH-top));
+                        //设置卡尺 待todo..
+                        
+                    }
+                    if(sizeObj.type == 't') {
+                        var speedY = sizeObj.moveY - sizeObj.downY;
+                        width = sizeObj.downW;
+                        height = sizeObj.downH - speedY;
+                        left = sizeObj.downLeft ;
+                        top = sizeObj.downTop + speedY;
+                        // 控制最小边距
+                        (top<= cObj.wrapT) && (height = cObj.componentEle.offsetHeight);
+                        (top<= cObj.wrapT) && (top = cObj.wrapT);
+                        //设置卡尺 待todo..
+                       
+                    }
+
+                    if(sizeObj.type == 'lt') {
+                        var speedX = sizeObj.moveX - sizeObj.downX;
+                        var speedY = sizeObj.moveY - sizeObj.downY;
+
+                        width = sizeObj.downW - speedX;
+                        height = sizeObj.downH - speedY;
+                        left = sizeObj.downLeft + speedX ;
+                        top = sizeObj.downTop + speedY;
+                        var topAndH = height +  top;
+                        // 控制最小边距
+                        (left<= cObj.wrapL) &&  (left = cObj.wrapL);
+                        (left<= cObj.wrapL) &&  (width = cObj.componentEle.offsetWidth);
+                        (top<= cObj.wrapT) && (height = cObj.componentEle.offsetHeight);
+                        (top<= cObj.wrapT) && (top = cObj.wrapT);
+                        //设置卡尺 待todo..
+                       
+                    }
+                    if(sizeObj.type == 'rt') {
+                        var speedX = sizeObj.moveX - sizeObj.downX;
+                        var speedY = sizeObj.moveY - sizeObj.downY;
+
+                        width = sizeObj.downW +speedX;
+                        height = sizeObj.downH - speedY;
+                        left = sizeObj.downLeft ;
+                        top = sizeObj.downTop + speedY;
+                        leftAndW = width +  left;
+                        // 控制 最小边距
+                        (leftAndW >= cObj.wrapW) && (width = (cObj.wrapW-left));
+                        (top<= cObj.wrapT) && (height = cObj.componentEle.offsetHeight);
+                        (top<= cObj.wrapT) && (top = cObj.wrapT);
+
+                        
+                    }
+
+                    if(sizeObj.type == 'lb') {
+                        var speedX = sizeObj.moveX - sizeObj.downX;
+                        var speedY = sizeObj.moveY - sizeObj.downY;
+
+                        width = sizeObj.downW - speedX;
+                        height = sizeObj.downH + speedY;
+                        left = sizeObj.downLeft + speedX ;
+                        top = sizeObj.downTop;
+                        var topAndH = height +  top;
+                        // 控制 left 最小边距
+                        (left<= cObj.wrapL) &&  (left = cObj.wrapL);
+                        (left<= cObj.wrapL) &&  (width = cObj.componentEle.offsetWidth);
+                        (topAndH >= cObj.wrapH) && (height = (cObj.wrapH-top));
+
+                        
+                    }
+                    if(sizeObj.type == 'rb') {
+                        var speedX = sizeObj.moveX - sizeObj.downX;
+                        var speedY = sizeObj.moveY - sizeObj.downY;
+                        
+                        width = sizeObj.downW +speedX;
+                        height = sizeObj.downH + speedY;
+                        left = sizeObj.downLeft  ;
+                        top = sizeObj.downTop;
+                        var topAndH = height +  top;
+                        var leftAndW = width +  left;
+                        // 控制 left 最小边距
+                        (leftAndW >= cObj.wrapW) && (width = (cObj.wrapW-left));
+                        (topAndH >= cObj.wrapH) && (height = (cObj.wrapH-top));
+                    };
+                    //辅助线
+                    sizeObj.lineArr = _this.utils.getAdsorbentArr({
+                        id:cObj.id,
+                        componentEle:cObj.componentEle,
+                        type:sizeObj.type,
+                        width:width,
+                        height:height,
+                        left:left,
+                        top:top
+                    });
+                
+                    _this.guide.playGuids(sizeObj.lineArr);
+                    _this.tips.show({
+                        top:top,
+                        left:left,
+                        width:width,
+                        height:height,
+                        componentEle:cObj.componentEle
+                    })
+                    Object.assign(sizeObj,{
+                        width:width,
+                        height:height,
+                        left: left,
+                        top:top
+                    });
+                    
+                    
+                    setWh(sizeObj,cObj);
+                }
+                var sizeMouseup = function(e,cObj){
+                    e.stopPropagation();
+                    //通过辅助线查找最近的吸附目标
+                    document.onmousemove = null;
+                    _this.utils.lineAdsorbent({
+                        behavior:sizeObj.type,
+                        lineArray:sizeObj.lineArr,
+                        callback:function(curObj){
+                            sizeObj = Object.assign(sizeObj,curObj)
+                            setWh(sizeObj,cObj);
+                            _this.guide.clearGuid();
+                        }
+                    });
+                    _this.tips.hide({ componentEle:cObj.componentEle});
+                    _this.opts.resize &&  _this.opts.resize(sizeObj)
+                   
+                }
+                var sizeMousedown = function(e,cObj){
+                    e.stopPropagation();
+                    var nodeCls = getClass(this);
+                    sizeObj = Object.assign({},sizeObj,{
+                        id:cObj.id,
+                        zIndex:cObj.componentEle.getAttribute('z-index') || 1,
+                        type:nodeCls,
+                        downX:e.pageX,
+                        downY:e.pageY,
+                        downW:cObj.componentEle.offsetWidth,
+                        downH:cObj.componentEle.offsetHeight,
+                        downLeft:cObj.componentEle.offsetLeft,
+                        downTop:cObj.componentEle.offsetTop,
+                    });
+                    _this.tips.show({
+                        top:sizeObj.downTop,
+                        left:sizeObj.downLeft,
+                        width:sizeObj.downW,
+                        height:sizeObj.downH,
+                        componentEle:cObj.componentEle
+                    });
+                    document.onmousemove  = null;
+                    document.onmousemove  = function(e){
+                        sizeMouseMove.call(this,e,cObj)
+                    };
+                    
+                }
+
+
+                var insetHtml = function(cObj){
+                    var resizeStr = '<span class="l"  style="height:'+cObj.componentEle.offsetHeight+'px"></span>'+
+                                     '<span class="r" style="height:'+cObj.componentEle.offsetHeight+'px;"></span>'+
+                                     '<span class="t" style="width:'+cObj.componentEle.offsetWidth+'px;"></span>'+
+                                     '<span class="b" style="width:'+cObj.componentEle.offsetWidth+'px;"></span>'+
+                                     '<span class="lt"></span>'+
+                                     '<span class="lb"></span>'+
+                                     '<span class="rt"></span>'+
+                                     '<span class="rb"></span>'; 
+                    var oldResizeWrap = this.querySelector(".resizeWrap");
+                    if (oldResizeWrap){return}; 
+                    var $resizeWrap = document.createElement('div');
+                   
+                    $resizeWrap.classList.add("resizeWrap");
+                    $resizeWrap.innerHTML = resizeStr;
+                    var reszieItem = $resizeWrap.querySelectorAll('span');
+                    this.append($resizeWrap); 
+                    for(var i=0;i<reszieItem.length;i++){
+                        reszieItem[i].onmousedown = function(e){
+                            document.onmouseup = null;
+                            sizeMousedown.call(this,e,cObj);
+                        };
+                        reszieItem[i].onmouseup = function(e){
+                            e.stopPropagation();
+                            document.onmousemove = null;
+                            this.onmouseup = null;
+                            sizeMouseup.call(this,e,cObj);
+                        };
+                        
+                    }
+                };
+                var clearSublingsResize = function(){
+                    for(var i=0;i<componentData.length;i++){
+                       var oldResizeWrap = componentData[i].componentEle.querySelector(".resizeWrap");
+                       oldResizeWrap && oldResizeWrap.remove();
+                    };
+                }
+                var selectedFn = function(cObj){
+                    clearSublingsResize();
+                    insetHtml.call(this,cObj)
+                };
+                for(var i=0;i<componentData.length;i++){
+                    (function(cObj){
+                        cObj.componentEle.onclick  = null;
+                        cObj.componentEle.onclick = function(e){
+                            e.stopPropagation();
+                            selectedFn.call(this,cObj);
+                        };
+                    })(componentData[i]);
+                };
+                
+            }
+            var ComponentSort = function(option){
+                this.option = option;
+                this.bgCarvas = null;
+                this.componentsArr = null;
+                this.drag = null;
+                this.init();
+            };
+           
+            ComponentSort.prototype.init = function(){
+                this.bgCarvas = new cavasFn(this.option);
+                this.componentsArr = new getCommpontesData(this.option);
+                this.drag = new DragComponent(Object.assign({},this.option,{componentData :this.componentsArr}));
+                this.resize = new ResizeComponent(Object.assign({},this.option,{componentData :this.componentsArr}));
+            }
+            ComponentSort.prototype.upDate = function(option){
+                var opts = Object.assign({},this.option,option);
+                this.bgCarvas = null;
+                this.bgCarvas = new cavasFn(opts);
+                this.componentsArr.upDate();
+                this.drag.eventFn();
+                this.resize.selectedEvt();
+            };
+            new ComponentSort({
+                target:document.getElementById('Wrap'),
+                editorWrap:document.getElementById('editorWrap'),
+                componentsWrap:document.getElementById('componentsWrap'),
+                eventItem:'.item',
+                cavasEl:document.getElementById('canvas'),
+                cavasWidth:1000,
+                cavasHeigth:1000,
+                spacing:20,//线间距
+                adsorptionNum:10,//组件之间吸附的间距
+                linecolor:'#0088ff',
+                resize:function(obj){
+                    console.log("resize",obj);
+                },
+                drag:function(obj){
+                    console.log(obj);
+                },
+                calipers:{
+                    cavasEl:document.getElementById('calipers'),
+                }
+
+            })
+        })();
+     </script>
+</body>
+</html>
