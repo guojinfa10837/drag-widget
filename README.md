@@ -15,6 +15,7 @@
 
 ## 以及简单的使用 
 #### html
+```
 <div class="Wrap"  id="Wrap">
          <div class="calipersWrap" >
             <canvas id="calipers" class="calipers" width="2000px" height="2000px"></canvas>
@@ -43,9 +44,9 @@
              </div>
          </div>
      </div>
-
+```
 #### CSS
-<style>
+```
 	.Wrap,body,html{
 		width:100%;
 		height: 100%;
@@ -177,8 +178,9 @@
 		box-sizing: border-box;
 		font-size: 12px;
 	}
-</style>
+```
 #### JS
+```
 import {DragWidget} from 'drag-widget'
  new DragWidget({
 	target:document.getElementById('Wrap'),
@@ -201,6 +203,7 @@ import {DragWidget} from 'drag-widget'
 		cavasEl:document.getElementById('calipers'),
 	}
 })
+```
 	 
 
 
