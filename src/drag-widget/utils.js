@@ -1,5 +1,6 @@
 var Utils = function(option){
     this.option = option;
+    this.componentData = [];
     this.methods = {
         //通过行为找到对应的辅助线类型 left或者top
         behaviorTolineType:function(opts){
@@ -150,7 +151,7 @@ var Utils = function(option){
 Utils.prototype.getAdsorbentArr = function(curObj){
     var array = new Array();
     var speed = this.option.adsorptionNum;
-    var componentData = this.option.componentData;
+    var componentData = this.componentData;
     var curTAndH = curObj.top+ curObj.height;
     var curLAndW = curObj.left + curObj.width;
      /**
@@ -248,6 +249,7 @@ Utils.prototype.getComponentsData = function(){
     var _this = this;
     var componentsWrap  = this.option.componentsWrap;
     var components = componentsWrap.querySelectorAll(this.option.eventItem);
+    console.log(components.length);
     var componentArray = [];
     for(var i=0;i<components.length;i++){
         var obj = {
@@ -265,6 +267,7 @@ Utils.prototype.getComponentsData = function(){
         }
         componentArray.push(obj);
     }
+    this.componentData = componentArray;
     return componentArray;
 };
 

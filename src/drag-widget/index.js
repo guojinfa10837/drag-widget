@@ -1,5 +1,6 @@
 import Guide from './guide';
 import Resize from './resize';
-import DragWidget from './dragWidget'
+import DragWidget from './dragWidget';
+import Drag from './drag';
 
-export {DragWidget,Guide,Resize}
+export {DragWidget,Guide,Drag,Resize}

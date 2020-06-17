@@ -4,19 +4,19 @@ import Utils from './utils';
 import Tips from './tips';
 var Resize = function(option){
     this.opts = option;
-    this.utils = new Utils(option);
-    this.guide = new Guide(option);
-    this.tips = new Tips();
+   
     this.init();
 };
 Resize.prototype.init = function(){
-    // 
+    this.utils = new Utils(this.opts);
+    this.guide = new Guide(this.opts);
+    this.tips = new Tips();
     this.selectedEvt();
 
 };
 Resize.prototype.selectedEvt = function(){
     var _this = this;
-    var componentData = this.opts.componentData;
+    var componentData = this.utils.getComponentsData();
     var componentsWrap = this.opts.componentsWrap;
     var getClass = function(node){
          return node.getAttribute('class');
@@ -165,7 +165,7 @@ Resize.prototype.selectedEvt = function(){
             (topAndH >= cObj.wrapH) && (height = (cObj.wrapH-top));
         };
         //辅助线
-        sizeObj.lineArr = _this.utils.getAdsorbentArr({
+        ( _this.opts.isAdsorption ) && (sizeObj.lineArr = _this.utils.getAdsorbentArr({
             id:cObj.id,
             componentEle:cObj.componentEle,
             type:sizeObj.type,
@@ -173,16 +173,16 @@ Resize.prototype.selectedEvt = function(){
             height:height,
             left:left,
             top:top
-        });
+        }));
     
-        _this.guide.playGuids(sizeObj.lineArr);
-        _this.tips.show({
+        ( _this.opts.isAdsorption ) && (_this.guide.playGuids(sizeObj.lineArr));
+        _this.opts.isShowTips && (_this.tips.show({
             top:top,
             left:left,
             width:width,
             height:height,
             componentEle:cObj.componentEle
-        })
+        }));
         Object.assign(sizeObj,{
             width:width,
             height:height,
@@ -197,7 +197,7 @@ Resize.prototype.selectedEvt = function(){
         e.stopPropagation();
         //通过辅助线查找最近的吸附目标
         document.onmousemove = null;
-        _this.utils.lineAdsorbent({
+        ( _this.opts.isAdsorption ) && (_this.utils.lineAdsorbent({
             behavior:sizeObj.type,
             lineArray:sizeObj.lineArr,
             callback:function(curObj){
@@ -205,8 +205,8 @@ Resize.prototype.selectedEvt = function(){
                 setWh(sizeObj,cObj);
                 _this.guide.clearGuid();
             }
-        });
-        _this.tips.hide({ componentEle:cObj.componentEle});
+        }));
+        _this.opts.isShowTips && _this.tips.hide({ componentEle:cObj.componentEle});
         _this.opts.resize &&  _this.opts.resize(sizeObj)
        
     }
@@ -224,13 +224,13 @@ Resize.prototype.selectedEvt = function(){
             downLeft:cObj.componentEle.offsetLeft,
             downTop:cObj.componentEle.offsetTop,
         });
-        _this.tips.show({
+        _this.opts.isShowTips && (_this.tips.show({
             top:sizeObj.downTop,
             left:sizeObj.downLeft,
             width:sizeObj.downW,
             height:sizeObj.downH,
             componentEle:cObj.componentEle
-        });
+        }));
         document.onmousemove  = null;
         document.onmousemove  = function(e){
             sizeMouseMove.call(this,e,cObj)
@@ -284,11 +284,16 @@ Resize.prototype.selectedEvt = function(){
         (function(cObj){
             cObj.componentEle.onclick  = null;
             cObj.componentEle.onclick = function(e){
-                e.stopPropagation();
+                //e.stopPropagation();
                 selectedFn.call(this,cObj);
             };
         })(componentData[i]);
     };
+}
+
+Resize.prototype.update = function(opts){
+    this.opts = Object.assign({},this.opts,opts);
+    this.init()
 }
 
 export default Resize;

@@ -4,12 +4,15 @@ import Utils from './utils';
 import Tips from './tips';
 var Drag = function(option){
     this.option = option;
-    this.guide = new Guide(option);
-    this.utils = new Utils(option);
-    this.tips = new Tips();
     this.init();
     this.state = {};
 };
+Drag.prototype.init = function(){
+    this.guide = this.option.isAdsorption ?new Guide(this.option) : null;
+    this.utils = new Utils(this.option);
+    this.tips = new Tips();
+    this.eventFn();
+}
 //吸附辅助线
 Drag.prototype.isAdsorbent = function(itemObj,adsorbentCallback,noadsorbentCallback){
     var $wrap = this.option.target;
@@ -48,7 +51,9 @@ Drag.prototype.isAdsorbent = function(itemObj,adsorbentCallback,noadsorbentCallb
 };
 Drag.prototype.eventFn = function(){
    var _this = this;
-   var componentsData = this.option.componentData;
+
+   var componentsData = this.utils.getComponentsData();
+   
    var $wrap = this.option.target;
    var ads = {
        isads:true
@@ -56,6 +61,7 @@ Drag.prototype.eventFn = function(){
    var $eventItem = $wrap.querySelectorAll(this.option.eventItem);
    var editorWrapL =_this.option.editorWrap.offsetLeft; 
    var editorWrapT =_this.option.editorWrap.offsetTop; 
+   var ismove  = false;
    var evtFn = function(cObj){
         var itemObj = {
             wrapT:'', //包裹元素盒子的t
@@ -77,9 +83,10 @@ Drag.prototype.eventFn = function(){
             isads:false,
         }
         var mousedownFn = function(e){
+            ismove = false;
             itemObj = {isads:false,adsL:"",adsT:""};
             var getMaxZindex = _this.utils.getMaxZindex(componentsData);
-            _this.utils.setZindex(cObj.componentEle,getMaxZindex+1);
+           _this.option.ischangeZindex &&  _this.utils.setZindex(cObj.componentEle,getMaxZindex+1);
             var index = getMaxZindex+1;
             itemObj = Object.assign({isads:false,adsL:"",adsT:""},itemObj,cObj,{
                 id:this.getAttribute('data-id'),
@@ -92,7 +99,7 @@ Drag.prototype.eventFn = function(){
                 height:this.offsetHeight,
             });
             //位置框
-            _this.tips.show({
+            _this.option.isShowTips && _this.tips.show({
                left:itemObj.downLeft,
                top:itemObj.downTop,
                width:itemObj.width,
@@ -103,6 +110,8 @@ Drag.prototype.eventFn = function(){
             this.addEventListener("mousemove",mousemoveFn);
         };
         var mousemoveFn = function(e){
+            e.stopPropagation();
+            e.preventDefault();
             itemObj.moveTop = this.offsetTop;
             itemObj.moveLeft = this.offsetLeft;
             itemObj.moveevtL = e.pageX;
@@ -114,32 +123,37 @@ Drag.prototype.eventFn = function(){
             }
             itemObj.moveingL = itemObj.left =  l;
             itemObj.moveingT = itemObj.top = t;
-            itemObj.lineArr = _this.utils.getAdsorbentArr({
+            (_this.option.isAdsorption) &&  (itemObj.lineArr = _this.utils.getAdsorbentArr({
                 id:cObj.id,
                 left:itemObj.moveingL,
                 top: itemObj.moveingT,
                 width:itemObj.width,
                 height:itemObj.height,
                 componentEle:cObj.componentEle
-            });
-            _this.guide.playGuids( itemObj.lineArr);
-            _this.tips.upDate({
+            }));
+            _this.option.isAdsorption && _this.guide.playGuids( itemObj.lineArr);
+            _this.option.isShowTips && _this.tips.upDate({
                left:itemObj.moveingL,
                top:itemObj.moveingT,
                width:itemObj.width,
                height:itemObj.height,
                componentEle:cObj.componentEle
             });
+            //判断是否移动
+            (Math.abs(itemObj.moveingT - itemObj.downTop)>0 || Math.abs(itemObj.moveingT - itemObj.downTop)>0) && (ismove = true) ;
+
+            
             this.style.top = itemObj.moveingT+"px";
             this.style.left = itemObj.moveingL+"px";
+            this.removeEventListener("mouseleave",mouseupFn);
+            this.addEventListener("mouseleave",mouseupFn);
         };
 
         var mouseupFn = function(e){
-            this.removeEventListener("mousemove",mousemoveFn);
-
             var _t = this;
+            this.removeEventListener("mousemove",mousemoveFn);
             //清除辅助线
-            _this.utils.lineAdsorbent({
+            (_this.option.isAdsorption) && (_this.utils.lineAdsorbent({
                 lineArray: itemObj.lineArr,
                 callback:function(curObj){
                    /*  sizeObj = Object.assign(sizeObj,curObj)
@@ -149,26 +163,38 @@ Drag.prototype.eventFn = function(){
 
                     _this.guide.clearGuid();
                 }
-            })
-            _this.tips.hide({
+            }));
+            _this.option.isShowTips &&  _this.tips.hide({
                 componentEle:cObj.componentEle
             });
-            _this.option.drag &&  _this.option.drag(itemObj);
+            (_this.option.drag && ismove && (itemObj.left || itemObj.top)) &&  _this.option.drag(itemObj);
             //_this.guide.clearGuid();
             itemObj = {};
         }; 
-        cObj.componentEle.removeEventListener("mousedown",mousedownFn);
+       /*  cObj.componentEle.removeEventListener("mousedown",mousedownFn);
         cObj.componentEle.addEventListener("mousedown",mousedownFn);
         cObj.componentEle.removeEventListener("mouseup",mouseupFn);
-        cObj.componentEle.addEventListener("mouseup",mouseupFn);
+        cObj.componentEle.addEventListener("mouseup",mouseupFn); */
+        cObj.componentEle.onmousedown = null;
+        cObj.componentEle.onmousedown = mousedownFn;
+        cObj.componentEle.onmouseup = null;
+        cObj.componentEle.onmouseup = mouseupFn;
+       // cObj.componentEle.onMousedown = mousedownFn;
+        
+        
     }
+    console.log(componentsData);
     for(var i=0;i<componentsData.length;i++){
-       (function(Obj){
+        console.log('9999');
+        evtFn(componentsData[i]);
+      /*  (function(Obj){
            evtFn(Obj);
-       })(componentsData[i]);
+       })(componentsData[i]); */
     }
 };
-Drag.prototype.init = function(){
-   this.eventFn();
+
+Drag.prototype.update = function(opts){
+    this.option = Object.assign({},this.option,opts);
+    this.init()
 }
 export default Drag;
