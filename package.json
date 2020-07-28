@@ -1,8 +1,18 @@
 {
-  "name": "typescript",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name":"drag-widget",
+  "version":"1.0.6",
+  "author":"guojinfa",
+  "main": "src/drag-widget/index.js",
+  "homepage": "https://github.com/guojinfa10837/drag-widget#readme",
+  "description":"Drag and drop assistant widget based on dragee",
+  "repository": "https://github.com/guojinfa10837/drag-widget",
+  "email":"guojinfa1@163.com",
+  "keywords":[
+      "drag",
+      "drag&resize",
+      "drag&adsorption",
+      "guide"
+    ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "webpack --config webpack.config.js",
@@ -11,7 +21,6 @@
     "build": "webpack --config webpack.prod.js",
     "server": "node server.js"
   },
-  "author": "",
   "license": "ISC",
   "devDependencies": {
     "art-template-loader": "^1.4.3",
